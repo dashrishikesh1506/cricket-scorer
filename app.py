@@ -3,7 +3,8 @@ import json
 import os
 
 app = Flask(__name__)
-DATA_FILE = "data.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, "data.json")
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -17,15 +18,15 @@ def save_data(data):
 
 @app.route("/")
 def serve_index():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(BASE_DIR, "index.html")
 
 @app.route("/style.css")
 def serve_css():
-    return send_from_directory(".", "style.css")
+    return send_from_directory(BASE_DIR, "style.css")
 
 @app.route("/script.js")
 def serve_js():
-    return send_from_directory(".", "script.js")
+    return send_from_directory(BASE_DIR, "script.js")
 
 @app.route("/api/data", methods=["GET"])
 def get_data():
