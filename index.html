@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cricket Score Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>🏏 Cricket Score Tracker</h1>
+  <nav>
+    <button data-view="homeView" class="active">Home</button>
+    <button data-view="newMatchView">New Match</button>
+    <button data-view="liveView">Live Match</button>
+    <button data-view="historyView">Match History</button>
+    <button data-view="statsView">Player Stats</button>
+  </nav>
+</header>
+
+<main>
+
+  <div id="homeView" class="view active">
+    <div class="card">
+      <h2>Welcome</h2>
+      <p class="muted">Track live cricket scores, batting & bowling stats, and keep history of every match.</p>
+      <button class="btn" onclick="goTo('newMatchView')">+ Start a New Match</button>
+      <button class="btn secondary" id="resumeBtn" style="display:none;margin-left:8px;" onclick="resumeMatch()">Resume Live Match</button>
+    </div>
+    <div class="card" id="recentMatchesCard">
+      <h2>Recent Matches</h2>
+      <div id="recentMatchesList" class="empty">No matches yet. Start your first match!</div>
+    </div>
+  </div>
+
+  <div id="newMatchView" class="view">
+    <div class="card">
+      <h2>Match Setup</h2>
+      <div class="row">
+        <div>
+          <label>Team A Name</label>
+          <input type="text" id="teamAName" placeholder="e.g. Royal Strikers">
+        </div>
+        <div>
+          <label>Team B Name</label>
+          <input type="text" id="teamBName" placeholder="e.g. City Warriors">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Team A Players (comma separated)</label>
+          <textarea id="teamAPlayers" placeholder="Player1, Player2, Player3..."></textarea>
+        </div>
+        <div>
+          <label>Team B Players (comma separated)</label>
+          <textarea id="teamBPlayers" placeholder="Player1, Player2, Player3..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Overs per innings</label>
+          <input type="number" id="oversLimit" value="20" min="1">
+        </div>
+        <div>
+          <label>Which team bats first?</label>
+          <select id="battingFirst">
+            <option value="A">Team A</option>
+            <option value="B">Team B</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="margin-top:14px;" onclick="createMatch()">Start Match →</button>
+    </div>
+  </div>
+
+  <div id="liveView" class="view">
+    <div id="liveContent"></div>
+  </div>
+
+  <div id="historyView" class="view">
+    <div class="card">
+      <h2>All Matches</h2>
+      <div id="historyList" class="empty">No matches recorded yet.</div>
+    </div>
+    <div class="card" id="scorecardCard" style="display:none;">
+      <h2 id="scorecardTitle"></h2>
+      <div id="scorecardContent"></div>
+    </div>
+  </div>
+
+  <div id="statsView" class="view">
+    <div class="card">
+      <h2>Player Statistics (All-Time)</h2>
+      <div class="player-tabs">
+        <button class="active" data-tab="batting" onclick="switchStatTab('batting')">Batting</button>
+        <button data-tab="bowling" onclick="switchStatTab('bowling')">Bowling</button>
+      </div>
+      <div id="statsContent" class="empty">No player data yet. Play a match first!</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Cricket Score Tracker — data is saved by your Python server.</footer>
+
+<div class="modal-bg" id="wicketModal">
+  <div class="modal">
+    <h3>Wicket!</h3>
+    <label>How was the batsman out?</label>
+    <select id="dismissalType">
+      <option>Bowled</option>
+      <option>Caught</option>
+      <option>LBW</option>
+      <option>Run Out</option>
+      <option>Stumped</option>
+      <option>Hit Wicket</option>
+      <option>Other</option>
+    </select>
+    <label>Next batsman</label>
+    <select id="nextBatsman"></select>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn secondary small" onclick="closeModal('wicketModal')">Cancel</button>
+      <button class="btn small" onclick="confirmWicket()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="bowlerModal">
+  <div class="modal">
+    <h3>Select Next Bowler</h3>
+    <label>Bowler (over complete)</label>
+    <select id="nextBowler"></select>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn small" onclick="confirmNextBowler()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="inningsBreakModal">
+  <div class="modal">
+    <h3 id="inningsBreakTitle">Innings Break</h3>
+    <p id="inningsBreakSummary" class="muted"></p>
+    <label>Opening Striker</label>
+    <select id="i2Striker"></select>
+    <label>Opening Non-Striker</label>
+    <select id="i2NonStriker"></select>
+    <label>Opening Bowler</label>
+    <select id="i2Bowler"></select>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn small" onclick="startSecondInnings()">Start 2nd Innings →</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="openSetupModal">
+  <div class="modal">
+    <h3>Set Openers</h3>
+    <label>Opening Striker</label>
+    <select id="openStriker"></select>
+    <label>Opening Non-Striker</label>
+    <select id="openNonStriker"></select>
+    <label>Opening Bowler (from <span id="openBowlTeamLabel"></span>)</label>
+    <select id="openBowler"></select>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn small" onclick="confirmOpeners()">Begin Innings →</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
